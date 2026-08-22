@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ExploreIndia AI</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f6f8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background: white;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 22px;
+            background: linear-gradient(135deg, #ff7a18, #e91e63);
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .chat-area {
+            flex: 1;
+            padding: 22px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 18px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .bubble {
+            max-width: 75%;
+            padding: 13px 16px;
+            border-radius: 15px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .assistant .bubble {
+            background: #eeeeee;
+            color: #222;
+            border-bottom-left-radius: 4px;
+        }
+
+        .user .bubble {
+            background: #e91e63;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .welcome {
+            text-align: center;
+            margin: 50px auto;
+            max-width: 550px;
+        }
+
+        .welcome h2 {
+            margin-bottom: 12px;
+            color: #222;
+        }
+
+        .welcome p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .typing {
+            display: none;
+            padding: 10px 16px;
+            color: #777;
+            font-size: 14px;
+        }
+
+        .typing.active {
+            display: block;
+        }
+
+        .input-area {
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            background: white;
+            display: flex;
+            gap: 10px;
+        }
+
+        #messageInput {
+            flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            padding: 13px 18px;
+            outline: none;
+            font-size: 15px;
+        }
+
+        #messageInput:focus {
+            border-color: #e91e63;
+        }
+
+        #sendButton {
+            border: none;
+            border-radius: 25px;
+            padding: 0 24px;
+            background: #e91e63;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        #sendButton:hover {
+            opacity: 0.9;
+        }
+
+        #sendButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                align-items: stretch;
+            }
+
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .bubble {
+                max-width: 88%;
+            }
+
+            .input-area {
+                padding: 10px;
+            }
+
+            #sendButton {
+                padding: 0 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="chat-container">
+
+    <div class="header">
+        <h1>🇮🇳 ExploreIndia AI</h1>
+        <p>Your Indian Tourism Guide</p>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+
+        <div class="welcome" id="welcome">
+            <h2>Welcome to ExploreIndia AI</h2>
+
+            <p>
+                Ask me about Indian destinations, itineraries,
+                sightseeing, food, culture, travel ideas and more.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="typing" id="typing">
+        ExploreIndia AI is thinking...
+    </div>
+
+    <div class="input-area">
+
+        <input
+            type="text"
+            id="messageInput"
+            placeholder="Ask about travelling in India..."
+            autocomplete="off"
+        >
+
+        <button id="sendButton">
+            Send
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+    const chatArea = document.getElementById("chatArea");
+    const messageInput = document.getElementById("messageInput");
+    const sendButton = document.getElementById("sendButton");
+    const typing = document.getElementById("typing");
+    const welcome = document.getElementById("welcome");
+
+    let conversationHistory = [];
+
+    function addMessage(role, content) {
+
+        if (welcome) {
+            welcome.style.display = "none";
+        }
+
+        const messageDiv = document.createElement("div");
+
+        messageDiv.className =
+            role === "user"
+                ? "message user"
+                : "message assistant";
+
+        const bubble = document.createElement("div");
+
+        bubble.className = "bubble";
+        bubble.textContent = content;
+
+        messageDiv.appendChild(bubble);
+        chatArea.appendChild(messageDiv);
+
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    async function sendMessage() {
+
+        const message = messageInput.value.trim();
+
+        if (!message) {
+            return;
+        }
+
+        addMessage("user", message);
+
+        conversationHistory.push({
+            role: "user",
+            content: message
+        });
+
+        messageInput.value = "";
+        sendButton.disabled = true;
+        typing.classList.add("active");
+
+        try {
+
+            const response = await fetch("/api/chat", {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    message: message,
+                    history: conversationHistory
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.error || "Something went wrong."
+                );
+            }
+
+            const reply = data.reply;
+
+            addMessage("assistant", reply);
+
+            conversationHistory.push({
+                role: "assistant",
+                content: reply
+            });
+
+        } catch (error) {
+
+            addMessage(
+                "assistant",
+                "Sorry, something went wrong. Please try again."
+            );
+
+            console.error(error);
+
+        } finally {
+
+            typing.classList.remove("active");
+            sendButton.disabled = false;
+            messageInput.focus();
+        }
+    }
+
+    sendButton.addEventListener("click", sendMessage);
+
+    messageInput.addEventListener("keydown", function(event) {
+
+        if (event.key === "Enter") {
+            event.preventDefault();
+            sendMessage();
+        }
+
+    });
+
+    messageInput.focus();
+</script>
+
+</body>
+</html>
